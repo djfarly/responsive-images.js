@@ -162,7 +162,7 @@
 							}
 
 						} else {
-							newCssSource = "url('" + newSource + "')";
+							var newCssSource = "url('" + newSource + "')";
 
 							if(responsiveElement.style.backgroundImage !== newCssSource){
 
@@ -183,15 +183,12 @@
 	}
 
 	if(window.addEventListener){
-
 		window.addEventListener('load', makeImagesAndBackgroundImagesResponsive, false);
 		window.addEventListener('resize', makeImagesAndBackgroundImagesResponsive, false);
-
 	} else { //ie <=8 fix
-
 		window.attachEvent('onload', makeImagesAndBackgroundImagesResponsive);
 		window.attachEvent('onresize', makeImagesAndBackgroundImagesResponsive);
-
 	}
 
+	makeImagesAndBackgroundImagesResponsive();
 }));
