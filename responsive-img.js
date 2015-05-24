@@ -1,26 +1,43 @@
+
 /*
-// @name: Responsive-img.js
+// @name: responsive-img.js
 // @version: 1.1
 // 
-// Copyright 2013-2014 Koen Vendrik, http://kvendrik.com
+// 2015 - Jan Willem Henckel http://farly.de
+// forked from: https://github.com/kvendrik/responsive-images.js
+// (Copyright 2013-2014 Koen Vendrik, http://kvendrik.com)
 // Licensed under the MIT license
 */
 
-	function makeImagesResponsive(){
 
-			var viewport = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+	    define(factory);
+	} else {
+	    factory();
+	}
+}(function () {
 
-		////////GET ALL IMAGES////////
+	function makeImagesAndBackgroundImagesResponsive(){
 
-		var images = document.getElementsByTagName('body')[0].getElementsByTagName('img');
-		if( images.length === 0 ){
+		var viewport = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+		////////GET ALL RESPONSIVE ELEMENTS ////////
+
+		var responsiveElements = document.querySelectorAll('[data-responsive]');
+
+		console.log(responsiveElements);
+
+		if( responsiveElements.length === 0 ){
 			return;
 		}
+
+		
 
 		////////HASATTR FUNCTION////////
 
 		var hasAttr;
-		if(!images[0].hasAttribute){ //IE <=7 fix
+		if(!responsiveElements[0].hasAttribute){ //IE <=7 fix
 
 			hasAttr = function(el, attrName){ //IE does not support Object.Prototype
 				return el.getAttribute(attrName) !== null;
@@ -38,36 +55,36 @@
 
 		var retina = window.devicePixelRatio ? window.devicePixelRatio >= 1.2 ? 1 : 0 : 0;
 
-		////////LOOP ALL IMAGES////////
+		////////LOOP ALL RESPONSIVE ELEMENTS ////////
 
-		for (var i = 0; i < images.length; i++) {
+		for (var i = 0; i < responsiveElements.length; i++) {
 
-				var image = images[i];
+				var responsiveElement = responsiveElements[i];
 
 
 				//set attr names
 
-				var srcAttr = ( retina && hasAttr(image, 'data-src2x') ) ? 'data-src2x' : 'data-src';
-				var baseAttr = ( retina && hasAttr(image, 'data-src-base2x') ) ? 'data-src-base2x' : 'data-src-base';
+				var srcAttr = ( retina && hasAttr(responsiveElement, 'data-src2x') ) ? 'data-src2x' : 'data-src';
+				var baseAttr = ( retina && hasAttr(responsiveElement, 'data-src-base2x') ) ? 'data-src-base2x' : 'data-src-base';
 
-				//check image attributes
+				//check responsiveElement attributes
 
-				if( !hasAttr(image, srcAttr) ){
+				if( !hasAttr(responsiveElement, srcAttr) ){
 					continue;
 				}
 
-				var basePath = hasAttr(image, baseAttr) ? image.getAttribute(baseAttr) : '';
+				var basePath = hasAttr(responsiveElement, baseAttr) ? responsiveElement.getAttribute(baseAttr) : '';
 
 
 				//get attributes
 
-				var queries = image.getAttribute(srcAttr);
+				var queries = responsiveElement.getAttribute(srcAttr);
 
 
 
 				//split defined query list
 
-					var queries_array = queries.split(',');
+				var queries_array = queries.split(',');
 
 				//loop queries
 
@@ -129,18 +146,29 @@
 
 						var isCrossDomain = response.indexOf('//') !== -1 ? 1 : 0;
 
-						var new_source;
+						var newSource;
 						if(isCrossDomain === 1){
-							new_source = response;
+							newSource = response;
 						} else {
-							new_source = basePath + response;
+							newSource = basePath + response;
 						}
 
-						if(image.src !== new_source){
+						if(responsiveElement.nodeName === 'img' || responsiveElement.nodeName === 'IMG') {
 
-							//change img src to basePath + response
-							image.setAttribute('src', new_source);
+							if(responsiveElement.src !== newSource){
 
+								//change img src to basePath + response
+								responsiveElement.setAttribute('src', newSource);
+							}
+
+						} else {
+							newCssSource = "url('" + newSource + "')";
+
+							if(responsiveElement.style.backgroundImage !== newCssSource){
+
+								//change element css src to basePath + response
+								responsiveElement.style.backgroundImage = newCssSource;
+							}
 						}
 
 						//break loop
@@ -154,14 +182,16 @@
 
 	}
 
-if(window.addEventListener){
+	if(window.addEventListener){
 
-	window.addEventListener('load', makeImagesResponsive, false);
-	window.addEventListener('resize', makeImagesResponsive, false);
+		window.addEventListener('load', makeImagesAndBackgroundImagesResponsive, false);
+		window.addEventListener('resize', makeImagesAndBackgroundImagesResponsive, false);
 
-} else { //ie <=8 fix
+	} else { //ie <=8 fix
 
-	window.attachEvent('onload', makeImagesResponsive);
-	window.attachEvent('onresize', makeImagesResponsive);
+		window.attachEvent('onload', makeImagesAndBackgroundImagesResponsive);
+		window.attachEvent('onresize', makeImagesAndBackgroundImagesResponsive);
 
-}
+	}
+
+}));
