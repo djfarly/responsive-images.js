@@ -18,6 +18,42 @@
 	}
 }(function () {
 
+	function loadImageSrc(src, callback) {
+		var	image = new Image();
+
+		image.onload = function() {
+			this.onload  = null;
+			callback(image);
+		};
+
+		image.src = src;
+	}
+
+	var loadList = [];
+
+	function updateLoadListFor(element, src) {
+		var found = false;
+		loadList = loadList.map(function(loadListItem) {
+			if (loadListItem.element === element && loadListItem.src !== src) {
+				loadListItem.src = src;
+				found = true;
+			}
+			return loadListItem;
+		});
+		if (!found) loadList.push({'element': element, 'src': src});
+	}
+
+	function sourceShouldStillChangeFor(element, src) {
+		return loadList.some(function(loadListItem) {
+			if (loadListItem.element !== element) return false;
+			if (loadListItem.src !== src) return false;
+			if (element.src === loadListItem.src || element.style.backgroundImage === "url('" + loadListItem.src + "')") return false;
+			return true;
+		});
+	}
+
+
+
 	function makeImagesAndBackgroundImagesResponsive(){
 
 		var viewport = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -25,8 +61,6 @@
 		////////GET ALL RESPONSIVE ELEMENTS ////////
 
 		var responsiveElements = document.querySelectorAll('[data-responsive]');
-
-		console.log(responsiveElements);
 
 		if( responsiveElements.length === 0 ){
 			return;
@@ -153,23 +187,19 @@
 							newSource = basePath + response;
 						}
 
-						if(responsiveElement.nodeName === 'img' || responsiveElement.nodeName === 'IMG') {
 
-							if(responsiveElement.src !== newSource){
+						updateLoadListFor(responsiveElement, newSource);
 
-								//change img src to basePath + response
-								responsiveElement.setAttribute('src', newSource);
+						loadImageSrc(newSource, function() {
+							if(sourceShouldStillChangeFor(responsiveElement, newSource)){
+								if (responsiveElement.nodeName === 'IMG' || responsiveElement.nodeName === 'img') {
+									responsiveElement.setAttribute('src', newSource);
+								} else {
+									responsiveElement.style.backgroundImage = "url('" + newSource + "')";
+								}
+								responsiveElement.classList.add('image-loaded');
 							}
-
-						} else {
-							var newCssSource = "url('" + newSource + "')";
-
-							if(responsiveElement.style.backgroundImage !== newCssSource){
-
-								//change element css src to basePath + response
-								responsiveElement.style.backgroundImage = newCssSource;
-							}
-						}
+						});
 
 						//break loop
 						break;
