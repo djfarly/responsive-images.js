@@ -18,12 +18,12 @@
 	}
 }(function () {
 
-	function loadImageSrc(src, callback) {
+	function loadImageSrc(src, element, callback) {
 		var	image = new Image();
 
 		image.onload = function() {
 			this.onload  = null;
-			callback(image);
+			callback(image, element);
 		};
 
 		image.src = src;
@@ -33,21 +33,31 @@
 
 	function updateLoadListFor(element, src) {
 		var found = false;
+		var noChange = false;
 		loadList = loadList.map(function(loadListItem) {
 			if (loadListItem.element === element && loadListItem.src !== src) {
 				loadListItem.src = src;
+				found = true;
+			} else if (loadListItem.element === element && loadListItem.src === src) {
+				noChange = true;
 				found = true;
 			}
 			return loadListItem;
 		});
 		if (!found) loadList.push({'element': element, 'src': src});
+
+		console.log('updated: loadlist - no change? ', noChange);
+
+		return !noChange;
 	}
 
 	function sourceShouldStillChangeFor(element, src) {
+		console.log('checking:', element, ' - should src still change to: ', src);
+		console.log(loadList);
 		return loadList.some(function(loadListItem) {
 			if (loadListItem.element !== element) return false;
 			if (loadListItem.src !== src) return false;
-			if (element.src === loadListItem.src || element.style.backgroundImage === "url('" + loadListItem.src + "')") return false;
+			if (element.src === loadListItem.src || element.style.backgroundImage === "url(" + loadListItem.src + ")") return false;
 			return true;
 		});
 	}
@@ -188,18 +198,20 @@
 						}
 
 
-						updateLoadListFor(responsiveElement, newSource);
-
-						loadImageSrc(newSource, function() {
-							if(sourceShouldStillChangeFor(responsiveElement, newSource)){
-								if (responsiveElement.nodeName === 'IMG' || responsiveElement.nodeName === 'img') {
-									responsiveElement.setAttribute('src', newSource);
-								} else {
-									responsiveElement.style.backgroundImage = "url('" + newSource + "')";
+						if (updateLoadListFor(responsiveElement, newSource)) {
+							loadImageSrc(newSource, responsiveElement, function(image, element) {
+								if(sourceShouldStillChangeFor(element, image.src)){
+									if (element.nodeName === 'IMG' || element.nodeName === 'img') {
+										element.setAttribute('src', image.src);
+									} else {
+										element.style.backgroundImage = "url(" + image.src + ")";
+									}
+									element.classList.add('image-loaded');
 								}
-								responsiveElement.classList.add('image-loaded');
-							}
-						});
+							});
+						}
+
+
 
 						//break loop
 						break;
